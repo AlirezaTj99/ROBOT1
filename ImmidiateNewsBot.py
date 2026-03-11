@@ -1,5 +1,7 @@
 from telethon import TelegramClient, events
 from deep_translator import GoogleTranslator
+from difflib import SequenceMatcher
+from collections import deque
 import asyncio
 import re
 
@@ -23,6 +25,14 @@ my_channel_id = "🔴⭐️ **اخبار جنگ | @IRKHABARFORY**"
 
 client = TelegramClient("session", api_id, api_hash)
 albums = {}  # برای جمع کردن مدیاهای آلبوم
+
+
+# نگهداری 50 پیام آخر
+last_messages = deque(maxlen=50)
+# نگهداری 50 مدیا آخر
+last_media_ids = deque(maxlen=50)
+SIMILARITY_THRESHOLD = 0.9
+
 
 def is_persian(text):
     return re.search(r'[\u0600-\u06FF]', text)
@@ -49,6 +59,9 @@ def clean_text(text):
     # حذف لینک ها
     text = re.sub(r"http\S+", "", text)
 
+    # حذف سال 2026 چون درست ترنزلیت نمیشه
+    text = re.sub(r"2026", "", text)
+
     # # حذف آیدی کانال ها
     text = re.sub(r'^.*@\w+.*$', '', text, flags=re.MULTILINE)
 
@@ -72,6 +85,9 @@ def clean_text(text):
         "پی وی",
         "لینک",
         "جوین",
+        "وصلم",
+        "گیگی",
+        "آیدی",
         "چنل",
         "بخر"
     ]
@@ -84,6 +100,40 @@ def clean_text(text):
 
     return text.strip()
 
+def get_media_id(message):
+    if message.photo:
+        return message.photo.id
+    if message.video:
+        return message.video.id
+    if message.document:
+        return message.document.id
+    return None
+
+def is_similar(text1, text2):
+    return SequenceMatcher(None, text1, text2).ratio()
+
+def is_duplicate(text, media_id=None):
+    
+    # بررسی شباهت متن
+    for old_text in last_messages:
+        if is_similar(text, old_text) >= SIMILARITY_THRESHOLD:
+            return True
+
+    # بررسی مدیا
+    if media_id and media_id in last_media_ids:
+        return True
+
+    return False
+
+def save_recent(text, media_id):
+    # ذخیره در لیست پیام‌ها
+    if text:
+        last_messages.append(text)
+
+    # ذخیره مدیا
+    if media_id:
+        last_media_ids.append(media_id)
+        
 @client.on(events.NewMessage(chats=source_channels))
 async def handler(event):
 
@@ -91,10 +141,16 @@ async def handler(event):
     text = message.text or ""
 
     text = clean_text(text)
+    media_id = get_media_id(message)
+
 
     if text:
         text = f"{text} \n\n\n {my_channel_id}"
         # text = f"{text} \n\n\n <blockquote> {my_channel_id} </blockquote>"
+
+    # بررسی تکراری بودن
+    if text and is_duplicate(text, media_id):
+        return
 
     # اگر پیام آلبوم باشد
     if message.grouped_id:
@@ -119,6 +175,7 @@ async def handler(event):
                 caption=caption,
                 parse_mode="md"
             )
+            save_recent(text, media_id)
 
         return
 
@@ -131,6 +188,7 @@ async def handler(event):
             caption=text if text else my_channel_id,
             parse_mode="md"
         )
+        save_recent(text, media_id)
 
     else:
 
@@ -138,10 +196,10 @@ async def handler(event):
             return
 
         await client.send_message(target_channel, text, parse_mode="md")
+        save_recent(text, media_id)
 
     # delay
     # await asyncio.sleep(DELAY_BETWEEN_MESSAGES)
-
 
 client.start()
 print("Bot running...")
