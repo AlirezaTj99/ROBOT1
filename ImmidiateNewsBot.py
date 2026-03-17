@@ -20,9 +20,6 @@ target_channel = "IRkhabarFory"
 # my_channel_id = "🔴⭐️ اخبار جنگ | @KHABARFOOOURY"
 my_channel_id = "🔴⭐️ **اخبار جنگ | @IRKHABARFORY**"
 
-# فاصله بین ارسال پیام ها
-# DELAY_BETWEEN_MESSAGES = 1
-
 client = TelegramClient("session", api_id, api_hash)
 albums = {}  # برای جمع کردن مدیاهای آلبوم
 
@@ -31,7 +28,7 @@ albums = {}  # برای جمع کردن مدیاهای آلبوم
 last_messages = deque(maxlen=50)
 # نگهداری 50 مدیا آخر
 last_media_ids = deque(maxlen=50)
-SIMILARITY_THRESHOLD = 0.9
+SIMILARITY_THRESHOLD = 0.8
 
 
 def is_persian(text):
@@ -133,13 +130,43 @@ def save_recent(text, media_id):
     # ذخیره مدیا
     if media_id:
         last_media_ids.append(media_id)
+
+def MassageCheckForApp(message):
+    if not message.document:
+        return False
+
+    mime = message.document.mime_type
+
+    # چک mime type
+    blocked_mimes = [
+        "application/vnd.android.package-archive",
+        "application/x-msdownload",
+        "application/octet-stream"
+    ]
+
+    if mime in blocked_mimes:
+        return True
+
+    # چک اسم فایل
+    if message.document.attributes:
+        for attr in message.document.attributes:
+            if hasattr(attr, "file_name"):
+                name = attr.file_name.lower()
+                if name.endswith((".apk", ".exe", ".ipa", ".xapk", ".msi", ".dmg")):
+                    return True
+
+    return False
         
 @client.on(events.NewMessage(chats=source_channels))
 async def handler(event):
 
     message = event.message
+    
+    # prevent sending App
+    if MassageCheckForApp(message):
+        return
+    
     text = message.text or ""
-
     text = clean_text(text)
     media_id = get_media_id(message)
 
@@ -182,10 +209,14 @@ async def handler(event):
     # اگر مدیا تکی باشد
     if message.media:
 
+        # If there was no caption cancle the massage
+        if not text:
+            return
+
         await client.send_file(
             target_channel,
             message.media,
-            caption=text if text else my_channel_id,
+            caption=text,
             parse_mode="md"
         )
         save_recent(text, media_id)
@@ -197,9 +228,6 @@ async def handler(event):
 
         await client.send_message(target_channel, text, parse_mode="md")
         save_recent(text, media_id)
-
-    # delay
-    # await asyncio.sleep(DELAY_BETWEEN_MESSAGES)
 
 client.start()
 print("Bot running...")
