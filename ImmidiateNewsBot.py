@@ -18,7 +18,7 @@ source_channels = [
 target_channel = "IRkhabarFory"
 
 # my_channel_id = "🔴⭐️ اخبار جنگ | @KHABARFOOOURY"
-my_channel_id = "🔴⭐️ **اخبار جنگ | @IRKHABARFORY**"
+my_channel_id = "🔴⭐️ **اخبار فوری | @IRKHABARFORY**"
 
 client = TelegramClient("session", api_id, api_hash)
 albums = {}  # برای جمع کردن مدیاهای آلبوم
