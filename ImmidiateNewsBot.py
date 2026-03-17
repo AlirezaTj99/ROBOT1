@@ -18,7 +18,7 @@ source_channels = [
 target_channel = "IRkhabarFory"
 
 # my_channel_id = "🔴⭐️ اخبار جنگ | @KHABARFOOOURY"
-my_channel_id = "🔴⭐️ **اخبار لحظه ای | @IRKHABARFORY**"
+my_channel_id = "🔴⭐️ **اخبار جنگ | @IRKHABARFORY**"
 
 client = TelegramClient("session", api_id, api_hash)
 albums = {}  # برای جمع کردن مدیاهای آلبوم
@@ -152,7 +152,7 @@ def MassageCheckForApp(message):
         for attr in message.document.attributes:
             if hasattr(attr, "file_name"):
                 name = attr.file_name.lower()
-                if name.endswith((".apk", ".exe", ".ipa", ".xapk", ".msi", ".dmg")):
+                if name.endswith((".apk", ".exe")):
                     return True
 
     return False
@@ -161,11 +161,10 @@ def MassageCheckForApp(message):
 async def handler(event):
 
     message = event.message
-    
     # prevent sending App
     if MassageCheckForApp(message):
         return
-    
+        
     text = message.text or ""
     text = clean_text(text)
     media_id = get_media_id(message)
@@ -209,14 +208,10 @@ async def handler(event):
     # اگر مدیا تکی باشد
     if message.media:
 
-        # If there was no caption cancle the massage
-        if not text:
-            return
-
         await client.send_file(
             target_channel,
             message.media,
-            caption=text,
+            caption=text if text else my_channel_id,
             parse_mode="md"
         )
         save_recent(text, media_id)
