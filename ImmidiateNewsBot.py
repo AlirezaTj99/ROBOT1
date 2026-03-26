@@ -10,15 +10,15 @@ api_id = 38981254
 api_hash = "24be9fd8c44c28de5d8f0f520a6955a7"
 
 source_channels = [
-    "khabarfuri",
-    "partizanfree",
+    # "khabarfuri",
+    # "partizanfree",
     "wfwitness"
 ]
 
 target_channel = "IRkhabarFory"
 
 # my_channel_id = "🔴⭐️ اخبار جنگ | @KHABARFOOOURY"
-my_channel_id = "🔴⭐️ **اخبار فوری | @IRKHABARFORY**"
+my_channel_id = "🔴⭐️ **اخبار جنگ ایران | @IRKHABARFORY**"
 
 client = TelegramClient("session", api_id, api_hash)
 albums = {}  # برای جمع کردن مدیاهای آلبوم
@@ -28,7 +28,7 @@ albums = {}  # برای جمع کردن مدیاهای آلبوم
 last_messages = deque(maxlen=50)
 # نگهداری 50 مدیا آخر
 last_media_ids = deque(maxlen=50)
-SIMILARITY_THRESHOLD = 0.8
+SIMILARITY_THRESHOLD = 0.85
 
 
 def is_persian(text):
