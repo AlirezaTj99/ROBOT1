@@ -10,8 +10,8 @@ api_id = 38981254
 api_hash = "24be9fd8c44c28de5d8f0f520a6955a7"
 
 source_channels = [
-    # "khabarfuri",
-    # "partizanfree",
+    "khabarfuri",
+    "partizanfree",
     "wfwitness"
 ]
 
